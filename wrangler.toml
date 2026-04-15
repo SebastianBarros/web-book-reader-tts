@@ -1,0 +1,11 @@
+name = "web-book-reader-tts"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+[vars]
+# Origins allowed to call this worker. Comma-separated, no spaces.
+# Includes the local dev server and the deployed GitHub Pages origin.
+ALLOWED_ORIGINS = "http://localhost:5173,https://sebastianbarros.github.io"
+
+# Secrets (do NOT put them here):
+#   GOOGLE_API_KEY — set via: wrangler secret put GOOGLE_API_KEY

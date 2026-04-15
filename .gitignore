@@ -1,0 +1,14 @@
+node_modules/
+.wrangler/
+dist/
+.dev.vars
+*.log
+.env
+.env.local
+.DS_Store
+Thumbs.db
+
+# Local smoke-test outputs — don't ship these in the repo
+samples/
+test-output.mp3
+*.mp3
