@@ -1,6 +1,11 @@
+interface RateLimiter {
+  limit(opts: { key: string }): Promise<{ success: boolean }>
+}
+
 interface Env {
   GOOGLE_API_KEY: string
   ALLOWED_ORIGINS: string
+  RATE_LIMITER: RateLimiter
 }
 
 interface TTSRequest {
@@ -129,6 +134,24 @@ export default {
       return jsonResponse({ error: 'forbidden' }, 403, cors)
 
     const url = new URL(req.url)
+
+    // Per-IP rate limit on the billable endpoints. Synthesis hits Google's
+    // paid API; /voices proxies Google too. Liveness (`/`) is free, no limit.
+    if (
+      (req.method === 'POST' && url.pathname === '/tts') ||
+      (req.method === 'GET' && url.pathname === '/voices')
+    ) {
+      const ip = req.headers.get('CF-Connecting-IP') ?? 'unknown'
+      const { success } = await env.RATE_LIMITER.limit({ key: ip })
+      if (!success) {
+        return jsonResponse(
+          { error: 'rate limited', detail: 'Too many requests — please slow down.' },
+          429,
+          { ...cors, 'Retry-After': '60' },
+        )
+      }
+    }
+
     if (req.method === 'POST' && url.pathname === '/tts')
       return handleSynthesize(req, env, cors)
     if (req.method === 'GET' && url.pathname === '/voices')
